@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌾 FARMA AI: Your Multilingual Farming Assistant</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f0f4f7;
+        background-image: url("https://i.imgur.com/gK9tHqL.jpeg");
+        background-size: cover;
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+      .chatbot-container {
+        width: 100%;
+        max-width: 450px;
+        height: 600px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .chatbot-header {
+        background-color: #3b823b;
+        color: white;
+        padding: 18px;
+        text-align: center;
+        font-size: 1.2em;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .language-select {
+        padding: 5px;
+        border-radius: 8px;
+        border: 1px solid #c5d8a8;
+        background-color: #e6f3e6;
+        color: #3b823b;
+        font-size: 0.8em;
+        cursor: pointer;
+      }
+      .chatbot-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .message {
+        max-width: 80%;
+        padding: 12px;
+        border-radius: 20px;
+        line-height: 1.4;
+      }
+      .bot-message {
+        background-color: #e6f3e6;
+        color: #333;
+        align-self: flex-start;
+      }
+      .user-message {
+        background-color: #d1e7dd;
+        color: #333;
+        align-self: flex-end;
+      }
+      .image-preview-container img {
+        max-width: 100%;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        margin-top: 8px;
+      }
+      .chatbot-input {
+        display: flex;
+        padding: 15px;
+        border-top: 1px solid #e0e0e0;
+        background-color: #f7f7f7;
+        gap: 10px;
+      }
+      #user-input {
+        flex: 1;
+        border: 1px solid #ccc;
+        border-radius: 25px;
+        padding: 12px 18px;
+        outline: none;
+      }
+      .input-buttons {
+        display: flex;
+        gap: 10px;
+      }
+      .input-buttons button,
+      .file-upload-label {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        font-size: 1.2em;
+      }
+      #image-upload {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chatbot-container">
+      <div class="chatbot-header">
+        <h3>FARMA AI 🤖</h3>
+        <select class="language-select" id="language-select">
+          <option value="en" selected>English</option>
+          <option value="hi">हिन्दी (Hindi)</option>
+          <option value="bn">বাংলা (Bengali)</option>
+          <option value="ta">தமிழ் (Tamil)</option>
+          <option value="te">తెలుగు (Telugu)</option>
+          <option value="mr">मराठी (Marathi)</option>
+          <option value="kn">ಕನ್ನಡ (Kannada)</option>
+          <option value="ml">മലയാളം (Malayalam)</option>
+          <option value="gu">ગુજરાતી (Gujarati)</option>
+          <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+          <option value="ur">اردو (Urdu)</option>
+        </select>
+      </div>
+      <div class="chatbot-messages" id="chatbot-messages"></div>
+      <div class="chatbot-input">
+        <input type="text" id="user-input" placeholder="Ask a question or describe a problem..." />
+        <div class="input-buttons">
+          <button id="voice-button" title="Start voice search">🎤</button>
+          <input type="file" id="image-upload" accept="image/*" />
+          <label for="image-upload" class="file-upload-label" title="Upload an image">🖼</label>
+          <button id="send-button" title="Send message">➡</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const botMessages = {
+        greeting: {
+          en: "Hello! I am FARMA AI, your multilingual farming assistant.",
+          hi: "नमस्ते! मैं फार्मा एआई हूँ, आपका बहुभाषी खेती सहायक।",
+          bn: "হ্যালো! আমি ফার্মা এআই, আপনার বহু-ভাষিক কৃষি সহকারী।",
+          ta: "வணக்கம்! நான் பார்மா ஏஐ, உங்களின் பன்மொழி விவசாய உதவியாளர்.",
+          te: "హలో! నేను ఫార్మా AI, మీ బహుభాషా వ్యవసాయ సహాయకుడు.",
+          mr: "नमस्कार! मी फार्मा एआय, तुमचा बहुभाषिक शेती सहाय्यक आहे.",
+          kn: "ನಮಸ್ಕಾರ! ನಾನು ಫಾರ್ಮಾ ಎಐ, ನಿಮ್ಮ ಬಹುಭಾಷಾ ಕೃಷಿ ಸಹಾಯಕ.",
+          ml: "നമസ്കാരം! ഞാൻ ഫാർമ എഐ, നിങ്ങളുടെ ബഹുഭാഷാ കൃഷി സഹായി.",
+          gu: "નમસ્તે! હું ફાર્મા એઆઇ, તમારો બહુભાષી ખેતી સહાયક છું.",
+          pa: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਫਾਰਮਾ AI, ਤੁਹਾਡਾ ਬਹੁਭਾਸ਼ੀ ਖੇਤੀ ਸਹਾਇਕ ਹਾਂ।",
+          ur: "السلام علیکم! میں فارما اے آئی ہوں، آپ کا کثیر لسانی زرعی معاون۔",
+        },
+        imageUploaded: {
+          en: "📷 Image uploaded successfully!",
+          hi: "📷 चित्र सफलतापूर्वक अपलोड हुआ!",
+          bn: "📷 ছবি সফলভাবে আপলোড হয়েছে!",
+          ta: "📷 படம் வெற்றிகரமாக பதிவேற்றப்பட்டது!",
+          te: "📷 చిత్రం విజయవంతంగా అప్‌లోడ్ అయింది!",
+          mr: "📷 प्रतिमा यशस्वीरित्या अपलोड झाली!",
+          kn: "📷 ಚಿತ್ರ ಯಶಸ್ವಿಯಾಗಿ ಅಪ್ಲೋಡ್ ಮಾಡಲಾಗಿದೆ!",
+          ml: "📷 ചിത്രം വിജയകരമായി അപ്‌ലോഡ് ചെയ്തു!",
+          gu: "📷 છબી સફળતાપૂર્વક અપલોડ થઈ!",
+          pa: "📷 ਤਸਵੀਰ ਸਫਲਤਾਪੂਰਵਕ ਅਪਲੋਡ ਹੋ ਗਈ!",
+          ur: "📷 تصویر کامیابی سے اپ لوڈ ہو گئی!",
+        },
+        voiceHeard: {
+          en: "🤖 Got it! You said:",
+          hi: "🤖 समझ गया! आपने कहा:",
+          bn: "🤖 বুঝেছি! আপনি বলেছেন:",
+          ta: "🤖 புரிந்துகொண்டேன்! நீங்கள் சொன்னது:",
+          te: "🤖 అర్థమైంది! మీరు చెప్పింది:",
+          mr: "🤖 समजले! तुम्ही म्हणालात:",
+          kn: "🤖 ಅರ್ಥವಾಯಿತು! ನೀವು ಹೇಳಿದ್ದು:",
+          ml: "🤖 മനസ്സിലാക്കി! നിങ്ങൾ പറഞ്ഞത്:",
+          gu: "🤖 સમજાયું! તમે કહ્યું:",
+          pa: "🤖 ਸਮਝ ਆ ਗਿਆ! ਤੁਸੀਂ ਕਿਹਾ:",
+          ur: "🤖 سمجھ گیا! آپ نے کہا:",
+        },
+        defaultResponse: {
+          en: "🌱 This is a sample response.",
+          hi: "🌱 यह एक उदाहरण उत्तर है।",
+          bn: "🌱 এটি একটি উদাহরণ উত্তর।",
+          ta: "🌱 இது ஒரு எடுத்துக்காட்டு பதில்.",
+          te: "🌱 ఇది ఒక ఉదాహరణ సమాధానం.",
+          mr: "🌱 हा एक उदाहरणार्थ प्रतिसाद आहे.",
+          kn: "🌱 ಇದು ಒಂದು ಉದಾಹರಣೆಯ ಪ್ರತಿಕ್ರಿಯೆ.",
+          ml: "🌱 ഇത് ഒരു ഉദാഹരണ പ്രതികരണമാണ്.",
+          gu: "🌱 આ એક ઉદાહરણ પ્રતિભાવ છે.",
+          pa: "🌱 ਇਹ ਇੱਕ ਉਦਾਹਰਨ ਜਵਾਬ ਹੈ।",
+          ur: "🌱 یہ ایک مثال کا جواب ہے۔",
+        },
+      };
+
+      const langMap = {
+        en: "en-IN",
+        hi: "hi-IN",
+        bn: "bn-IN",
+        ta: "ta-IN",
+        te: "te-IN",
+        mr: "mr-IN",
+        kn: "kn-IN",
+        ml: "ml-IN",
+        gu: "gu-IN",
+        pa: "pa-IN",
+        ur: "ur-IN",
+      };
+
+      const chatBox = document.getElementById("chatbot-messages");
+      const inputBox = document.getElementById("user-input");
+
+      document.getElementById("send-button").addEventListener("click", sendMessage);
+      document.getElementById("voice-button").addEventListener("click", startVoiceRecognition);
+      document.getElementById("image-upload").addEventListener("change", handleImageUpload);
+      document.getElementById("language-select").addEventListener("change", setGreeting);
+
+      function setGreeting() {
+        appendMessage(botMessages.greeting[getLang()], "bot");
+      }
+
+      function getLang() {
+        return document.getElementById("language-select").value;
+      }
+
+      function sendMessage() {
+        const text = inputBox.value.trim();
+        if (!text) return;
+        appendMessage(text, "user");
+        inputBox.value = "";
+        setTimeout(() => appendMessage(botMessages.defaultResponse[getLang()], "bot"), 700);
+      }
+
+      function handleImageUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          appendImageMessage(evt.target.result, botMessages.imageUploaded[getLang()]);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // ✅ CLEAN VOICE FUNCTION (no if/else)
+      function startVoiceRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          appendMessage("⚠️ Sorry, voice recognition is not supported in your browser.", "bot");
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = langMap[getLang()] || "en-IN";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.start();
+
+        recognition.onresult = function (e) {
+          const transcript = e.results[0][0].transcript;
+          appendMessage("🎤 " + transcript, "user");
+          setTimeout(
+            () => appendMessage(botMessages.voiceHeard[getLang()] + " " + transcript, "bot"),
+            700
+          );
+        };
+
+        recognition.onend = function () {
+          console.log("Voice recognition ended.");
+        };
+
+        recognition.onerror = function (e) {
+          const errorMessages = {
+            "not-allowed": "⚠️ Please allow microphone access to use voice search.",
+            "no-speech": "⚠️ No speech detected. Try again.",
+            network: "⚠️ Network error. Check your internet connection.",
+          };
+          appendMessage(errorMessages[e.error] || "⚠️ Voice recognition error.", "bot");
+        };
+      }
+
+      function appendMessage(text, sender) {
+        const div = document.createElement("div");
+        div.classList.add("message", sender + "-message");
+        div.textContent = text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      function appendImageMessage(imgData, text) {
+        const div = document.createElement("div");
+        div.classList.add("message", "bot-message");
+
+        const msg = document.createElement("div");
+        msg.textContent = text;
+        div.appendChild(msg);
+
+        const img = document.createElement("img");
+        img.src = imgData;
+        div.appendChild(img);
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+
+      // Initialize greeting
+      setGreeting();
+    </script>
+  </body>
+</html>
